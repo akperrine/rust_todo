@@ -6,11 +6,7 @@ use crossterm::{
 
 use tui::{
     backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Corner, Direction, Layout},
-    style::{Color, Modifier, Style},
-    text::{Span, Spans},
-    widgets::{Block, Borders, List, ListItem},
-    Frame, Terminal,
+    Terminal,
 };
 
 use crate::app::App;
@@ -22,7 +18,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
     loop {
         terminal.draw(|f| ui(f, &mut app))?;
 
-        // if crossterm::event::poll(timeout)? {
         if let Event::Key(key) = event::read()? {
             match key.code {
                 KeyCode::Char('q') => return Ok(()),
@@ -31,7 +26,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<(
                 KeyCode::Up => app.todos.previous(),
                 _ => {}
             }
-            // }
         }
     }
 }

@@ -1,12 +1,12 @@
 use crate::app::App;
 
 use tui::{
-    backend::{Backend, CrosstermBackend},
-    layout::{Constraint, Corner, Direction, Layout},
+    backend::Backend,
+    layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, Borders, List, ListItem},
-    Frame, Terminal,
+    Frame,
 };
 
 pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
