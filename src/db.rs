@@ -4,9 +4,15 @@ use rusqlite::Connection;
 
 use crate::todo::Todo;
 
-pub fn init_db() -> Result<Vec<Todo>, Box<dyn Error>> {
+pub trait Repository {
+    fn add_todo(&self, todo: &Todo) -> Result<(), rusqlite::Error>;
+    fn get_todos(&self) -> Result<Vec<Todo>, rusqlite::Error>;
+    fn update_todo(&self, todo: &Todo) -> Result<(), rusqlite::Error>;
+    // fn delete_todo(&self, todo: &Todo) -> Result<(), rusqlite::Error>;
+}
+
+pub fn init_db(conn: &Connection) -> Result<Vec<Todo>, Box<dyn Error>> {
     // SQLite Setup
-    let conn = Connection::open_in_memory()?;
 
     conn.execute(
         "CREATE TABLE todo (
@@ -53,3 +59,11 @@ pub fn init_db() -> Result<Vec<Todo>, Box<dyn Error>> {
 
     Ok(loaded_todos)
 }
+
+// pub fn insert_todo(conn: &Connection, todo: Todo) -> Result<(), rusqlite::Error> {
+//     let sql = "INSERT INTO todo (message, complete) VALUES (?, ?)";
+
+//     conn.execute(sql, (todo.message, todo.complete))?;
+
+//     Ok(())
+// }

@@ -9,28 +9,69 @@ use tui::{
     Terminal,
 };
 
-use crate::app::App;
-use crate::todo::Todo;
+use rusqlite::Connection;
+
 use crate::ui::ui;
+use crate::{app::App, db::Repository};
+use crate::{app::InputMode, todo::Todo};
 use std::{error::Error, io};
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
+fn run_app<B: Backend>(
+    conn: &Connection,
+    terminal: &mut Terminal<B>,
+    mut app: App,
+) -> io::Result<()> {
     loop {
         terminal.draw(|f| ui(f, &mut app))?;
 
         if let Event::Key(key) = event::read()? {
-            match key.code {
-                KeyCode::Char('q') => return Ok(()),
-                KeyCode::Left => app.todos.unselect(),
-                KeyCode::Down => app.todos.next(),
-                KeyCode::Up => app.todos.previous(),
-                _ => {}
+            match app.input_mode {
+                InputMode::Normal => match key.code {
+                    KeyCode::Char('q') => return Ok(()),
+                    KeyCode::Char('a') => {
+                        app.input_mode = InputMode::EditingAdd;
+                    }
+                    KeyCode::Left => app.todos.unselect(),
+                    KeyCode::Down => app.todos.next(),
+                    KeyCode::Up => app.todos.previous(),
+                    _ => {}
+                },
+                InputMode::EditingAdd | InputMode::EditingUpdate => match key.code {
+                    KeyCode::Enter => {
+                        if app.input != "" {
+                            let todo = Todo {
+                                id: None,
+                                message: app.input.drain(..).collect(),
+                                complete: 1,
+                            };
+                            let _ = app.add_todo(&todo).unwrap();
+                            let todos = app.get_todos().unwrap();
+
+                            match app.input_mode {
+                                InputMode::EditingAdd => {
+                                    app.todos.add(&todos.get(todos.len() - 1).unwrap())
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                    KeyCode::Char(x) => {
+                        app.input.push(x);
+                    }
+                    KeyCode::Backspace => {
+                        app.input.pop();
+                    }
+                    KeyCode::Esc => {
+                        app.input_mode = InputMode::Normal;
+                    }
+                    _ => {}
+                },
             }
         }
     }
 }
 
-pub fn run(starting_todos: &[Todo]) -> Result<(), Box<dyn Error>> {
+pub fn run(conn: &Connection, starting_todos: &[Todo]) -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
@@ -38,8 +79,8 @@ pub fn run(starting_todos: &[Todo]) -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     // app create and run
-    let app = App::new(&starting_todos);
-    let res = run_app(&mut terminal, app);
+    let app = App::new(&starting_todos, conn);
+    let res = run_app(&conn, &mut terminal, app);
     disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),

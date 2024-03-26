@@ -5,16 +5,20 @@ pub struct Todo {
     pub complete: u8,
 }
 
-impl<'a> Todo {
-    fn add(message: String) -> Todo {
-        return Todo {
-            id: None,
-            message: message,
-            complete: 1,
-        };
-    }
+impl Todo {
+    // pub fn add(message: String) -> Result<Todo, rusqlite::Error> {
+    //     let new_todo = Todo {
+    //         id: None,
+    //         message: message,
+    //         complete: 1,
+    //     };
+    //     // insert_todo(conn, todo);
+    //     Ok(new_todo)
+    // }
 
-    // fn edit(todo: Todo) -> Todo {}
+    // pub fn edit(todo: Todo) -> Todo {
+    //     return Todo;
+    // }
 
-    // fn delete(id: Uuid) -> () {}
+    // pub fn delete(id: u32) -> () {}
 }
