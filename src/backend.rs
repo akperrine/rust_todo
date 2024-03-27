@@ -6,6 +6,7 @@ use crossterm::{
 
 use tui::{
     backend::{Backend, CrosstermBackend},
+    widgets::ListState,
     Terminal,
 };
 
@@ -31,6 +32,9 @@ fn run_app<B: Backend>(
                     KeyCode::Char('a') => {
                         app.input_mode = InputMode::EditingAdd;
                     }
+                    KeyCode::Char('e') => {
+                        app.input_mode = InputMode::EditingUpdate;
+                    }
                     KeyCode::Left => app.todos.unselect(),
                     KeyCode::Down => app.todos.next(),
                     KeyCode::Up => app.todos.previous(),
@@ -39,17 +43,39 @@ fn run_app<B: Backend>(
                 InputMode::EditingAdd | InputMode::EditingUpdate => match key.code {
                     KeyCode::Enter => {
                         if app.input != "" {
-                            let todo = Todo {
-                                id: None,
-                                message: app.input.drain(..).collect(),
-                                complete: 1,
-                            };
-                            let _ = app.add_todo(&todo).unwrap();
-                            let todos = app.get_todos().unwrap();
-
                             match app.input_mode {
                                 InputMode::EditingAdd => {
-                                    app.todos.add(&todos.get(todos.len() - 1).unwrap())
+                                    let todo = Todo {
+                                        id: None,
+                                        message: app.input.drain(..).collect(),
+                                        complete: 1,
+                                    };
+                                    app.add_todo(&todo).unwrap();
+                                }
+                                InputMode::EditingUpdate => {
+                                    let selected_index = app.todos.state.selected().unwrap();
+                                    // println!("{:?} hi", selected_index);
+                                    let selected_todo =
+                                        app.todos.items.get(selected_index).unwrap();
+                                    // println!("{:?} hii", selected_todo);
+                                    let todo = Todo {
+                                        id: selected_todo.id,
+                                        message: app.input.drain(..).collect(),
+                                        complete: selected_todo.complete,
+                                    };
+                                    // println!("{:?}", todo);
+                                    app.update_todo(&todo);
+                                }
+                                _ => {}
+                            }
+
+                            let todos = app.get_todos().unwrap();
+                            println!("{:?} todods", todos);
+
+                            match app.input_mode {
+                                InputMode::EditingUpdate | InputMode::EditingAdd => {
+                                    println!("refresh");
+                                    app.todos.refresh_items(&todos);
                                 }
                                 _ => {}
                             }

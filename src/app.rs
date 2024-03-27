@@ -1,5 +1,5 @@
 use crate::{db::Repository, todo::Todo};
-use rusqlite::Connection;
+use rusqlite::{Connection, OptionalExtension};
 use tui::widgets::ListState;
 pub struct StatefulList<T>
 where
@@ -52,13 +52,19 @@ where
         self.state.select(None);
     }
 
-    pub fn add(&mut self, todo: &T) {
-        self.items.push(todo.clone());
+    pub fn add(&mut self, item: &T) {
+        self.items.push(item.clone());
     }
 
-    pub fn update(&mut self, todo: &T) {
+    pub fn update(&mut self, item: &T) {
         // self.items.iter().find(|x| x.id == todo.item);
     }
+
+    pub fn refresh_items(&mut self, items: &[T]) {
+        self.items = items.to_vec();
+    }
+
+    // pub fn delete(&mut self, todo: &T) {}
 }
 
 pub enum InputMode {
@@ -94,7 +100,7 @@ impl<'a> Repository for App<'a> {
                 (&todo.message, &todo.complete),
             )
             .map(|_| ());
-        println!("{:?}", res);
+        // println!("{:?}", res);
         res
     }
 
@@ -114,28 +120,61 @@ impl<'a> Repository for App<'a> {
     }
 
     fn update_todo(&self, todo: &Todo) -> Result<(), rusqlite::Error> {
-        if let Some(id) = todo.id {
-            let mut stmt = self
-                .connection
-                .prepare("SELECT id, message, complete FROM todo WHERE id = :id")?;
-            let res = stmt.query_map(&[(":id", &id)], |row| {
-                Ok(Todo {
-                    id: row.get(0)?,
-                    message: row.get(1)?,
-                    complete: row.get(2)?,
-                })
-            })?;
+        // if let Some(id) = todo.id {
+        println!("{:?}", todo.id);
+        // let unwrapped_id = todo.id.unwrap();
+        let todo_exists = self
+            .connection
+            .query_row("SELECT 1 FROM todo WHERE id = ?", &[&todo.id], |x| {
+                println!("{:?}, hello", x);
+                Ok(true)
+            })
+            .unwrap_or(false);
+        println!("{}", todo_exists);
 
-            println!("HI");
-            let mut names = Vec::new();
-            for name_result in res {
-                names.push(name_result?);
-            }
-            println!("{:?} hi", names);
+        if todo_exists {
+            self.connection.execute(
+                "UPDATE todo SET message = ?, complete = ? WHERE id = ?",
+                &[
+                    &todo.message,
+                    &todo.complete.to_string(),
+                    &todo.id.unwrap().to_string(),
+                ],
+            )?;
             Ok(())
         } else {
-            println!("Cannot update todo with no ID");
-            Ok(())
+            Err(rusqlite::Error::QueryReturnedNoRows)
         }
+        // } else {
+        //     Err(rusqlite::Error::InvalidParameterName(
+        //         "todo id is none".into(),
+        //     ))
+        // }
+
+        // if let Some(id) = todo.id {
+        //     let mut stmt = self
+        //         .connection
+        //         .prepare("SELECT id, message, complete FROM todo WHERE id = :id")?;
+        //     let res = stmt
+        //         .query_map(&[(":id", &id)], |row| {
+        //             Ok(Todo {
+        //                 id: row.get(0)?,
+        //                 message: row.get(1)?,
+        //                 complete: row.get(2)?,
+        //             })
+        //         })
+        //         .optional();
+
+        //     println!("HI");
+        //     let mut names = Vec::new();
+        //     for name_result in res {
+        //         names.push(name_result?);
+        //     }
+        //     println!("{:?} hi", names);
+        //     Ok(())
+        // } else {
+        //     println!("Cannot update todo with no ID");
+        //     Ok(())
+        // }
     }
 }

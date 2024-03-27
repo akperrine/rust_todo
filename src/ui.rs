@@ -1,7 +1,4 @@
-use crate::{
-    app::{App, InputMode},
-    db::Repository,
-};
+use crate::app::{App, InputMode};
 
 use tui::{
     backend::Backend,
