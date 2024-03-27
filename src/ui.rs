@@ -59,7 +59,7 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
                 Span::raw(" to toggle complete, "),
                 Span::styled("e", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to edit selected, "),
-                // Span::styled("d", Style::default().add_modifier(Modifier::BOLD)),
+                
                 Span::raw(" to delete selected"),
             ],
             Style::default().add_modifier(Modifier::RAPID_BLINK),

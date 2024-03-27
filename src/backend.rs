@@ -35,6 +35,7 @@ fn run_app<B: Backend>(
                     KeyCode::Char('e') => {
                         app.input_mode = InputMode::EditingUpdate;
                     }
+                    KeyCode::Tab => {}
                     KeyCode::Left => app.todos.unselect(),
                     KeyCode::Down => app.todos.next(),
                     KeyCode::Up => app.todos.previous(),
@@ -53,18 +54,17 @@ fn run_app<B: Backend>(
                                     app.add_todo(&todo).unwrap();
                                 }
                                 InputMode::EditingUpdate => {
-                                    let selected_index = app.todos.state.selected().unwrap();
-                                    // println!("{:?} hi", selected_index);
-                                    let selected_todo =
-                                        app.todos.items.get(selected_index).unwrap();
-                                    // println!("{:?} hii", selected_todo);
-                                    let todo = Todo {
-                                        id: selected_todo.id,
-                                        message: app.input.drain(..).collect(),
-                                        complete: selected_todo.complete,
-                                    };
-                                    // println!("{:?}", todo);
-                                    app.update_todo(&todo);
+                                    if let Some(selected_index) = app.todos.state.selected() {
+                                        println!("{:?} hi", selected_index);
+                                        let selected_todo =
+                                            app.todos.items.get(selected_index).unwrap();
+                                        let todo = Todo {
+                                            id: selected_todo.id,
+                                            message: app.input.drain(..).collect(),
+                                            complete: selected_todo.complete,
+                                        };
+                                        let _ = app.update_todo(&todo);
+                                    }
                                 }
                                 _ => {}
                             }
