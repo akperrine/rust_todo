@@ -35,7 +35,26 @@ fn run_app<B: Backend>(
                     KeyCode::Char('e') => {
                         app.input_mode = InputMode::EditingUpdate;
                     }
-                    KeyCode::Tab => {}
+                    KeyCode::Tab => {
+                        if let Some(selected_index) = app.todos.state.selected() {
+                            let selected_todo = app.todos.items.get(selected_index).unwrap();
+                            let complete = match selected_todo.complete {
+                                0 => 1,
+                                1 => 0,
+                                _ => 0,
+                            };
+                            let todo = Todo {
+                                id: selected_todo.id,
+                                message: selected_todo.message.clone(),
+                                complete,
+                            };
+
+                            let _ = app.update_todo(&todo);
+                            let todos = app.get_todos().unwrap();
+                            println!("{:?}", todos);
+                            app.todos.refresh_items(&todos);
+                        }
+                    }
                     KeyCode::Left => app.todos.unselect(),
                     KeyCode::Down => app.todos.next(),
                     KeyCode::Up => app.todos.previous(),
@@ -55,7 +74,6 @@ fn run_app<B: Backend>(
                                 }
                                 InputMode::EditingUpdate => {
                                     if let Some(selected_index) = app.todos.state.selected() {
-                                        println!("{:?} hi", selected_index);
                                         let selected_todo =
                                             app.todos.items.get(selected_index).unwrap();
                                         let todo = Todo {
