@@ -51,7 +51,24 @@ fn run_app<B: Backend>(
 
                             let _ = app.update_todo(&todo);
                             let todos = app.get_todos().unwrap();
-                            println!("{:?}", todos);
+                            app.todos.refresh_items(&todos);
+                        }
+                    }
+                    KeyCode::Char('d') => {
+                        if let Some(selected_index) = app.todos.state.selected() {
+                            println!(
+                                "{}, {}",
+                                selected_index,
+                                app.todos.state.selected().unwrap()
+                            );
+                            let todo = app.todos.items.get(selected_index).unwrap();
+                            let todo_id = todo.id.expect("Id is None");
+                            let _ = app.delete_todo(todo_id);
+                            let todos = app.get_todos().unwrap();
+                            println!("{:?} HI", todos.len());
+                            if todos.len() == 0 {
+                                app.todos.unselect();
+                            }
                             app.todos.refresh_items(&todos);
                         }
                     }
@@ -88,11 +105,9 @@ fn run_app<B: Backend>(
                             }
 
                             let todos = app.get_todos().unwrap();
-                            println!("{:?} todods", todos);
 
                             match app.input_mode {
                                 InputMode::EditingUpdate | InputMode::EditingAdd => {
-                                    println!("refresh");
                                     app.todos.refresh_items(&todos);
                                 }
                                 _ => {}

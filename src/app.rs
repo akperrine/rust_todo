@@ -21,50 +21,44 @@ where
     }
 
     pub fn next(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i >= self.items.len() {
-                    0
-                } else {
-                    i + 1
+        if self.items.len() > 0 {
+            let i = match self.state.selected() {
+                Some(i) => {
+                    if i >= self.items.len() - 1 {
+                        0
+                    } else {
+                        i + 1
+                    }
                 }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i))
+                None => 0,
+            };
+            self.state.select(Some(i))
+        }
     }
 
     pub fn previous(&mut self) {
-        let i = match self.state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.items.len() - 1
-                } else {
-                    i - 1
+        if self.items.len() > 0 {
+            let i = match self.state.selected() {
+                Some(i) => {
+                    if i == 0 {
+                        self.items.len() - 1
+                    } else {
+                        i - 1
+                    }
                 }
-            }
-            None => 0,
-        };
-        self.state.select(Some(i));
+                None => 0,
+            };
+            self.state.select(Some(i));
+        }
     }
 
     pub fn unselect(&mut self) {
         self.state.select(None);
     }
 
-    pub fn add(&mut self, item: &T) {
-        self.items.push(item.clone());
-    }
-
-    pub fn update(&mut self, item: &T) {
-        // self.items.iter().find(|x| x.id == todo.item);
-    }
-
     pub fn refresh_items(&mut self, items: &[T]) {
         self.items = items.to_vec();
     }
-
-    // pub fn delete(&mut self, todo: &T) {}
 }
 
 pub enum InputMode {
@@ -133,6 +127,22 @@ impl<'a> Repository for App<'a> {
                     &todo.id.unwrap().to_string(),
                 ],
             )?;
+            Ok(())
+        } else {
+            Err(rusqlite::Error::QueryReturnedNoRows)
+        }
+    }
+
+    fn delete_todo(&self, id: u32) -> Result<(), rusqlite::Error> {
+        println!("{}", id);
+        let todo_exists = self
+            .connection
+            .query_row("SELECT 1 FROM todo WHERE id = ?", &[&id], |_| Ok(true))
+            .unwrap_or(false);
+        println!("{}", todo_exists);
+        if todo_exists {
+            self.connection
+                .execute("DELETE FROM todo WHERE id = ?", &[&id])?;
             Ok(())
         } else {
             Err(rusqlite::Error::QueryReturnedNoRows)

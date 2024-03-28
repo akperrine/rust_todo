@@ -8,7 +8,7 @@ pub trait Repository {
     fn add_todo(&self, todo: &Todo) -> Result<(), rusqlite::Error>;
     fn get_todos(&self) -> Result<Vec<Todo>, rusqlite::Error>;
     fn update_todo(&self, todo: &Todo) -> Result<(), rusqlite::Error>;
-    // fn delete_todo(&self, todo: &Todo) -> Result<(), rusqlite::Error>;
+    fn delete_todo(&self, todo: u32) -> Result<(), rusqlite::Error>;
 }
 
 pub fn init_db(conn: &Connection) -> Result<Vec<Todo>, Box<dyn Error>> {
