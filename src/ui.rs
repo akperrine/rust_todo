@@ -12,12 +12,14 @@ use tui::{
 use unicode_width::UnicodeWidthStr;
 
 pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+    // set UI chunks
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(2)
         .constraints([Constraint::Percentage(85), Constraint::Length(2)].as_ref())
         .split(f.size());
 
+    // UI for each List Item component
     let items: Vec<ListItem> = app
         .todos
         .items
@@ -47,6 +49,7 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 
     f.render_stateful_widget(items, chunks[0], &mut app.todos.state);
 
+    // Adding text instructions
     let (msg, style) = match app.input_mode {
         InputMode::Normal => (
             vec![
@@ -81,6 +84,7 @@ pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
     let help_message = Paragraph::new(text);
     f.render_widget(help_message, chunks[0]);
 
+    //UI for Input field
     let input = Paragraph::new(app.input.as_ref())
         .style(match app.input_mode {
             InputMode::Normal => Style::default(),

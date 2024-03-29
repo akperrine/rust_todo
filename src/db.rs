@@ -2,9 +2,9 @@ use std::error::Error;
 
 use rusqlite::Connection;
 
-use crate::todo::Todo;
+use crate::app::Todo;
 
-pub trait Repository {
+pub trait TodoRepository {
     fn add_todo(&self, todo: &Todo) -> Result<(), rusqlite::Error>;
     fn get_todos(&self) -> Result<Vec<Todo>, rusqlite::Error>;
     fn update_todo(&self, todo: &Todo) -> Result<(), rusqlite::Error>;
@@ -12,8 +12,7 @@ pub trait Repository {
 }
 
 pub fn init_db(conn: &Connection) -> Result<Vec<Todo>, Box<dyn Error>> {
-    // SQLite Setup
-
+    // SQLite Setup Loading a couple synthetic todos in
     conn.execute(
         "CREATE TABLE todo (
              id INTEGER PRIMARY KEY NOT NULL,
@@ -36,8 +35,7 @@ pub fn init_db(conn: &Connection) -> Result<Vec<Todo>, Box<dyn Error>> {
         message: String::from("Second to do"),
         complete: 1,
     };
-    // TODO set up Tui-rs
-    // TODO then start to add in the todo aspect;
+
     conn.execute(sql, (&todo_to_add.message, &todo_to_add.complete))?;
     conn.execute(sql, (&todo_to_add_2.message, &todo_to_add_2.complete))?;
 
@@ -59,11 +57,3 @@ pub fn init_db(conn: &Connection) -> Result<Vec<Todo>, Box<dyn Error>> {
 
     Ok(loaded_todos)
 }
-
-// pub fn insert_todo(conn: &Connection, todo: Todo) -> Result<(), rusqlite::Error> {
-//     let sql = "INSERT INTO todo (message, complete) VALUES (?, ?)";
-
-//     conn.execute(sql, (todo.message, todo.complete))?;
-
-//     Ok(())
-// }

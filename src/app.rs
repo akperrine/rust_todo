@@ -1,5 +1,5 @@
-use crate::{db::Repository, todo::Todo};
-use rusqlite::{Connection, OptionalExtension};
+use crate::db::TodoRepository;
+use rusqlite::Connection;
 use tui::widgets::ListState;
 pub struct StatefulList<T>
 where
@@ -67,6 +67,13 @@ pub enum InputMode {
     EditingUpdate,
 }
 
+#[derive(Clone, Debug)]
+pub struct Todo {
+    pub id: Option<u32>,
+    pub message: String,
+    pub complete: u8,
+}
+
 pub struct App<'a> {
     pub todos: StatefulList<Todo>,
     pub input: String,
@@ -83,9 +90,15 @@ impl<'a> App<'a> {
             connection,
         }
     }
+
+    fn check_exists(&self, id: u32) -> bool {
+        self.connection
+            .query_row("SELECT 1 FROM todo WHERE id = ?", &[&id], |_| Ok(true))
+            .unwrap_or(false)
+    }
 }
 
-impl<'a> Repository for App<'a> {
+impl<'a> TodoRepository for App<'a> {
     fn add_todo(&self, todo: &Todo) -> Result<(), rusqlite::Error> {
         let res = self
             .connection
@@ -113,10 +126,13 @@ impl<'a> Repository for App<'a> {
     }
 
     fn update_todo(&self, todo: &Todo) -> Result<(), rusqlite::Error> {
-        let todo_exists = self
-            .connection
-            .query_row("SELECT 1 FROM todo WHERE id = ?", &[&todo.id], |_| Ok(true))
-            .unwrap_or(false);
+        let todo_exists = match todo.id {
+            Some(id) => {
+                self.check_exists(id);
+                true
+            }
+            None => false,
+        };
 
         if todo_exists {
             self.connection.execute(
@@ -134,12 +150,8 @@ impl<'a> Repository for App<'a> {
     }
 
     fn delete_todo(&self, id: u32) -> Result<(), rusqlite::Error> {
-        println!("{}", id);
-        let todo_exists = self
-            .connection
-            .query_row("SELECT 1 FROM todo WHERE id = ?", &[&id], |_| Ok(true))
-            .unwrap_or(false);
-        println!("{}", todo_exists);
+        let todo_exists = self.check_exists(id);
+
         if todo_exists {
             self.connection
                 .execute("DELETE FROM todo WHERE id = ?", &[&id])?;

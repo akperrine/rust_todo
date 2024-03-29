@@ -6,22 +6,17 @@ use crossterm::{
 
 use tui::{
     backend::{Backend, CrosstermBackend},
-    widgets::ListState,
     Terminal,
 };
 
 use rusqlite::Connection;
 
+use crate::app::{InputMode, Todo};
 use crate::ui::ui;
-use crate::{app::App, db::Repository};
-use crate::{app::InputMode, todo::Todo};
+use crate::{app::App, db::TodoRepository};
 use std::{error::Error, io};
 
-fn run_app<B: Backend>(
-    conn: &Connection,
-    terminal: &mut Terminal<B>,
-    mut app: App,
-) -> io::Result<()> {
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App) -> io::Result<()> {
     loop {
         terminal.draw(|f| ui(f, &mut app))?;
 
@@ -56,16 +51,10 @@ fn run_app<B: Backend>(
                     }
                     KeyCode::Char('d') => {
                         if let Some(selected_index) = app.todos.state.selected() {
-                            println!(
-                                "{}, {}",
-                                selected_index,
-                                app.todos.state.selected().unwrap()
-                            );
                             let todo = app.todos.items.get(selected_index).unwrap();
                             let todo_id = todo.id.expect("Id is None");
                             let _ = app.delete_todo(todo_id);
                             let todos = app.get_todos().unwrap();
-                            println!("{:?} HI", todos.len());
                             if todos.len() == 0 {
                                 app.todos.unselect();
                             }
@@ -139,7 +128,7 @@ pub fn run(conn: &Connection, starting_todos: &[Todo]) -> Result<(), Box<dyn Err
 
     // app create and run
     let app = App::new(&starting_todos, conn);
-    let res = run_app(&conn, &mut terminal, app);
+    let res = run_app(&mut terminal, app);
     disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),
